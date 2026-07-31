@@ -1,0 +1,72 @@
+Problem Statement : 
+A company has N employees numbered 1 to N, organized into a strict reporting tree rooted at employee 1 (the CEO). This tree is described by N-1 edges; each edge connects an employee to their direct manager and carries an integer "adjustment score" that gets added to a running total as you move from the manager to the report.
+
+For any employee v, define pathScore(v) as the sum of adjustment scores along the unique path from the root (employee 1) down to v (with pathScore(1) = 0, since the root has no incoming edge).
+
+For an employee v, define spread(v) as the difference between the maximum pathScore and the minimum pathScore found among all employees in the subtree rooted at v (this subtree includes v itself and every employee who reports to v, directly or indirectly).
+
+You are given Q queries, each naming an employee v. For each query, output spread(v).
+
+  Code : 
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct Edge {
+    int to;
+    long long weight;
+};
+int N;
+vector<vector<Edge>> adj;
+vector<long long> pathScore;
+vector<long long> maxSubtreeScore;
+vector<long long> minSubtreeScore;
+
+void dfs(int u, int p, long long current_score) {
+    pathScore[u] = current_score;
+    maxSubtreeScore[u] = current_score;
+    minSubtreeScore[u] = current_score;
+    
+    for (const auto& edge : adj[u]) {
+        int v = edge.to;
+        long long w = edge.weight;
+        if (v != p) {
+            dfs(v, u, current_score + w);
+            maxSubtreeScore[u] = max(maxSubtreeScore[u], maxSubtreeScore[v]);
+            minSubtreeScore[u] = min(minSubtreeScore[u], minSubtreeScore[v]);
+        }
+    }
+}
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    if (!(cin >> N)) return 0;
+
+    adj.resize(N + 1);
+    pathScore.resize(N + 1, 0);
+    maxSubtreeScore.resize(N + 1, 0);
+    minSubtreeScore.resize(N + 1, 0);
+
+    for (int i = 0; i < N - 1; ++i) {
+        int u, v;
+        long long w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+    dfs(1, 0, 0);
+
+    int Q;
+    if (cin >> Q) {
+        while (Q--) {
+            int v;
+            cin >> v;
+            long long spread = maxSubtreeScore[v] - minSubtreeScore[v];
+            cout << spread << "\n";
+        }
+    }
+    return 0;
+}
