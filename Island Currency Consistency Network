@@ -1,0 +1,127 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+static const long long MOD = 1000000007LL;
+long long power(long long base, long long exp) {
+    long long res = 1;
+    base %= MOD;
+    while (exp > 0) {
+        if (exp % 2 == 1) res = (res * base) % MOD;
+        base = (base * base) % MOD;
+        exp /= 2;
+    }
+    return res;
+}
+
+long long modInverse(long long n) {
+    return power(n, MOD - 2);
+}
+
+struct WeightedDSU {
+    vector<int> parent;
+    vector<long long> weight;
+
+    WeightedDSU(int n) {
+        parent.resize(n + 1);
+        weight.assign(n + 1, 1LL);
+        for (int i = 1; i <= n; i++) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int i) {
+        if (parent[i] == i)
+            return i;
+        int root = find(parent[i]);
+        weight[i] = (weight[i] * weight[parent[i]]) % MOD;
+        parent[i] = root;
+        return parent[i];
+    }
+
+    void unionNodes(int u, int v, long long target_rate) {
+        int rootU = find(u);
+        int rootV = find(v);
+
+        if (rootU == rootV) {
+            long long current_rate = (weight[u] * modInverse(weight[v])) % MOD;
+            if (current_rate == target_rate) {
+                cout << "OK\n";
+            } else {
+                cout << "CONTRADICTION\n";
+            }
+        } else {
+
+            parent[rootU] = rootV;
+            long long new_weight = (target_rate * weight[v]) % MOD;
+            new_weight = (new_weight * modInverse(weight[u])) % MOD;
+            weight[rootU] = new_weight;
+            cout << "OK\n";
+        }
+    }
+
+    void query(int u, int v) {
+        if (u == v) {
+            cout << 1 << "\n";
+            return;
+        }
+
+        int rootU = find(u);
+        int rootV = find(v);
+
+        if (rootU != rootV) {
+            cout << "UNKNOWN\n";
+        } else {
+            long long rate = (weight[u] * modInverse(weight[v])) % MOD;
+            cout << rate << "\n";
+        }
+    }
+};
+
+void process_events(int n, int m, const vector<vector<int>>& events) {
+    WeightedDSU dsu(n);
+
+    for (int i = 0; i < m; i++) {
+        int type = events[i][0];
+        if (type == 1) {
+            int u = events[i][1];
+            int v = events[i][2];
+            long long p = events[i][3];
+            long long q = events[i][4];
+            long long target_rate = (p * modInverse(q)) % MOD;
+            dsu.unionNodes(u, v, target_rate);
+        } else if (type == 2) {
+            int u = events[i][1];
+            int v = events[i][2];
+            dsu.query(u, v);
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, m;
+    if (!(cin >> n >> m)) return 0;
+
+    vector<vector<int>> events(m);
+    for (int i = 0; i < m; i++) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            events[i].resize(5);
+            events[i][0] = 1;
+            cin >> events[i][1] >> events[i][2] >> events[i][3] >> events[i][4];
+        } else {
+            events[i].resize(3);
+            events[i][0] = 2;
+            cin >> events[i][1] >> events[i][2];
+        }
+    }
+
+    process_events(n, m, events);
+
+    return 0;
+}
