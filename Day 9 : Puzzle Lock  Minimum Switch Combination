@@ -1,0 +1,71 @@
+Problem Statement : An escape-room puzzle lock has M labeled switches (numbered 0 to M-1) and M indicator lights, also numbered 0 to M-1. Each light is either ON or OFF, and the entire light panel's state can be represented as an M-bit integer, where bit k is 1 if light k is ON.
+Pressing switch i instantly toggles a fixed set of lights — this fixed set is given as a bitmask mask[i]: pressing switch i XORs the current panel state with mask[i]. Note that pressing the same switch twice in a row cancels itself out (since XOR-ing with the same mask twice returns the panel to what it was before), so no useful strategy ever presses the same switch more than once — only whether each switch is pressed an odd number of times matters, not how many times or in what order.
+You are given the starting panel state S and the desired target panel state T. Determine the minimum number of switches that must be pressed (each at most once) so that the final panel state equals T. If it is impossible to reach T from S using any subset of the available switches, output -1.
+Input Format
+M
+mask[0] mask[1] ... mask[M-1]
+S T
+Output Format
+A single integer: the minimum number of switches required, or -1 if it is impossible.
+Constraints:
+0 ≤ mask[i] < 2^M
+0 ≤ S, T < 2^M
+Time Limit: 2 sec
+Memory Limit: 256 MB
+The output is unique.
+Sample Testcase 0
+Testcase Input
+4
+3 5 9 12
+6 10
+Testcase Output
+1
+
+
+Solution : 
+//Code 
+#include <iostream>
+#include <vector>
+
+int user_logic(const std::vector<long long>& mask, long long S, long long T) {
+    long long target = S ^ T;
+    int m = mask.size();
+    int min_switches = 1e9;
+    for (int i = 0; i < (1 << m); ++i) {
+        long long current_xor = 0;
+        int count = 0;
+        for (int j = 0; j < m;
+        ++j) {
+            if ((i >> j) & 1) {
+                current_xor ^= mask[j];
+                count++;
+            }
+        }
+        if (current_xor == target) {
+            if (count < min_switches) {
+                min_switches = count;
+            }
+        }
+    }
+    return (min_switches == 1e9) ? -1 : min_switches; 
+}
+
+int main() {
+    int m;
+    std::cin >> m;
+    std::vector<long long> mask(m);
+    for (int i = 0; i < m; ++i) {
+        std::cin >> mask[i];
+    }
+
+    long long S, T;
+    std::cin >> S >> T;
+    int result = user_logic(mask, S, T);
+    std::cout << result << "\n";
+
+    return 0;
+}
+                            
+Recommended Questions
+Filo Numbers
+Happy Number
