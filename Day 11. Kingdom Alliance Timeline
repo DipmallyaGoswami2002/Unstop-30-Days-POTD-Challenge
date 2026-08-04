@@ -1,0 +1,185 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <map>
+
+using namespace std;
+
+struct RollbackDSU {
+    vector<int> parent;
+    vector<int> rank;
+    vector<pair<int, int>> history;
+
+    RollbackDSU(int n) {
+        parent.resize(n + 1);
+        rank.resize(n + 1, 0);
+        for (int i = 1; i <= n; ++i) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int i) {
+        while (i != parent[i]) {
+            i = parent[i];
+        }
+        return i;
+    }
+
+    bool unite(int i, int j) {
+        int root_i = find(i);
+        int root_j = find(j);
+
+        if (root_i != root_j) {
+            if (rank[root_i] < rank[root_j]) {
+                swap(root_i, root_j);
+            }
+            history.push_back({root_j, parent[root_j]});
+            parent[root_j] = root_i;
+            
+            if (rank[root_i] == rank[root_j]) {
+                history.push_back({root_i, -1}); // flag for rank update
+                rank[root_i]++;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    int snapshot() {
+        return history.size();
+    }
+
+    void rollback(int until) {
+        while ((int)history.size() > until) {
+            auto [u, val] = history.back();
+            history.pop_back();
+            if (val == -1) {
+                rank[u]--;
+            } else {
+                parent[u] = val;
+            }
+        }
+    }
+};
+
+struct Query {
+    int u, v, id;
+};
+
+int N, M, Q;
+vector<pair<int, int>> tree_edges;
+vector<vector<pair<int, int>>> tree;
+vector<vector<Query>> tree_queries;
+vector<int> time_points;
+
+void add_edge(int node, int l, int r, int ql, int qr, pair<int, int> edge) {
+    if (ql <= l && r <= qr) {
+        tree[node].push_back(edge);
+        return;
+    }
+    int mid = l + (r - l) / 2;
+    if (ql <= mid) add_edge(2 * node, l, mid, ql, qr, edge);
+    if (qr > mid) add_edge(2 * node + 1, mid + 1, r, ql, qr, edge);
+}
+
+void add_query(int node, int l, int r, int idx, Query q) {
+    if (l == r) {
+        tree_queries[node].push_back(q);
+        return;
+    }
+    int mid = l + (r - l) / 2;
+    if (idx <= mid) add_query(2 * node, l, mid, idx, q);
+    else add_query(2 * node + 1, mid + 1, r, idx, q);
+}
+
+void solve(int node, int l, int r, RollbackDSU& dsu, vector<string>& ans) {
+    int snap = dsu.snapshot();
+
+    for (auto& edge : tree[node]) {
+        dsu.unite(edge.first, edge.second);
+    }
+
+    if (l == r) {
+        for (auto& q : tree_queries[node]) {
+            if (dsu.find(q.u) == dsu.find(q.v)) {
+                ans[q.id] = "YES";
+            } else {
+                ans[q.id] = "NO";
+            }
+        }
+    } else {
+        int mid = l + (r - l) / 2;
+        solve(2 * node, l, mid, dsu, ans);
+        solve(2 * node + 1, mid + 1, r, dsu, ans);
+    }
+
+    dsu.rollback(snap);
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    if (!(cin >> N >> M)) return 0;
+
+    struct Treaty {
+        int u, v;
+        long long l, r;
+    };
+
+    vector<Treaty> treaties(M);
+    vector<long long> raw_times;
+
+    for (int i = 0; i < M; ++i) {
+        cin >> treaties[i].u >> treaties[i].v >> treaties[i].l >> treaties[i].r;
+        raw_times.push_back(treaties[i].l);
+        raw_times.push_back(treaties[i].r);
+    }
+
+    cin >> Q;
+    struct QueryInput {
+        int u, v;
+        long long t;
+    };
+    vector<QueryInput> raw_queries(Q);
+
+    for (int i = 0; i < Q; ++i) {
+        cin >> raw_queries[i].u >> raw_queries[i].v >> raw_queries[i].t;
+        raw_times.push_back(raw_queries[i].t);
+    }
+    sort(raw_times.begin(), raw_times.end());
+    raw_times.erase(unique(raw_times.begin(), raw_times.end()), raw_times.end());
+
+    int T_size = raw_times.size();
+    if (T_size == 0) return 0;
+
+    tree.resize(4 * T_size);
+    tree_queries.resize(4 * T_size);
+
+    auto get_compressed_time = [&](long long val) {
+        return lower_bound(raw_times.begin(), raw_times.end(), val) - raw_times.begin();
+    };
+
+    for (int i = 0; i < M; ++i) {
+        int l_idx = get_compressed_time(treaties[i].l);
+        int r_idx = get_compressed_time(treaties[i].r);
+        add_edge(1, 0, T_size - 1, l_idx, r_idx, {treaties[i].u, treaties[i].v});
+    }
+
+    for (int i = 0; i < Q; ++i) {
+        int t_idx = get_compressed_time(raw_queries[i].t);
+        add_query(1, 0, T_size - 1, t_idx, {raw_queries[i].u, raw_queries[i].v, i});
+    }
+
+    RollbackDSU dsu(N);
+    vector<string> ans(Q);
+
+    solve(1, 0, T_size - 1, dsu, ans);
+
+    for (int i = 0; i < Q; ++i) {
+        cout << ans[i] << "\n";
+    }
+
+    return 0;
+}
