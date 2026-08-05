@@ -1,0 +1,72 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+struct TrieNode {
+    TrieNode* children[26];
+    int count;
+
+    TrieNode() {
+        count = 0;
+        for (int i = 0; i < 26; ++i) {
+            children[i] = nullptr;
+        }
+    }
+};
+void insert(TrieNode* root, const string& word) {
+    TrieNode* curr = root;
+    for (char ch : word) {
+        int idx = ch - 'a';
+        if (!curr->children[idx]) {
+            curr->children[idx] = new TrieNode();
+        }
+        curr = curr->children[idx];
+        curr->count++;
+    }
+}
+
+long long query(TrieNode* root, const string& prefix) {
+    TrieNode* curr = root;
+    for (char ch : prefix) {
+        int idx = ch - 'a';
+        if (!curr->children[idx]) {
+            return 0; // Prefix not found
+        }
+        curr = curr->children[idx];
+    }
+    return curr->count;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    if (!(cin >> n)) return 0;
+
+    TrieNode* root = new TrieNode();
+
+    for (int i = 0; i < n; ++i) {
+        string s;
+        cin >> s;
+        insert(root, s);
+    }
+
+    int q;
+    cin >> q;
+
+    for (int i = 0; i < q; ++i) {
+        string prefix;
+        cin >> prefix;
+
+        long long k = query(root, prefix);
+        
+        // Calculate unordered pairs C(k, 2)
+        long long pairs = k * (k - 1) / 2;
+        cout << pairs << "\n";
+    }
+
+    return 0;
+}
