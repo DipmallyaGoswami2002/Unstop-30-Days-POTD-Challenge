@@ -1,0 +1,88 @@
+Problem Statement : Along the Stormcrest Coast, a chain of old lighthouses helps ships navigate safely during the night. After a severe storm, several lighthouse beacons stopped working and must be repaired before sunset. Each repair requires a different amount of time depending on the extent of the damage.
+
+The coastal authority has assigned Meera to organize the restoration work. The repair crew can work on only one lighthouse at a time, and once a repair begins, it continues until that lighthouse is completely restored.
+
+Every lighthouse has a priority deadline. If its repair is completed on or before this time, it is considered an on-time restoration. Otherwise, the lighthouse is still repaired, but it is marked as delayed and does not contribute to the emergency preparedness report.
+
+Since completing every repair before its deadline is impossible, Meera wants to prepare an order of repairs that allows the largest possible number of lighthouses to be restored on time.
+
+Using the repair information for all lighthouses, determine the maximum number of on-time restorations that can be achieved.
+
+Input Format :
+The first line contains an integer N, representing the number of damaged lighthouses.
+
+Each of the next N lines contains two integers:
+
+T – the time required to repair the lighthouse.
+
+D – the latest time by which the repair must be completed to be considered on time.
+
+Output Format :
+Print a single integer representing the maximum number of lighthouses that can be restored on time.
+
+Constraints
+1 < N < 2 x 10^5
+
+1 < T, D < 10^9
+
+Sample Testcase 0
+Testcase Input
+5
+3 4
+2 5
+1 3
+4 8
+2 6
+Testcase Output
+3
+
+
+
+
+Solution :😘
+
+// CODE
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <queue>
+
+struct Lighthouse {
+    long long duration;
+    long long deadline;
+};
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(NULL);
+
+    int n;
+    if (!(std::cin >> n)) return 0;
+
+    std::vector<Lighthouse> lighthouses(n);
+    for (int i = 0; i < n; ++i) {
+        std::cin >> lighthouses[i].duration >> lighthouses[i].deadline;
+    }
+
+    std::sort(lighthouses.begin(), lighthouses.end(), [](const Lighthouse& a, const Lighthouse& b) {
+        if (a.deadline != b.deadline)
+            return a.deadline < b.deadline;
+        return a.duration < b.duration;
+    });
+
+    std::priority_queue<long long> max_heap;
+    long long total_time = 0;
+
+    for (const auto& item : lighthouses) {
+        total_time += item.duration;
+        max_heap.push(item.duration);
+        if (total_time > item.deadline) {
+            total_time -= max_heap.top();
+            max_heap.pop();
+        }
+    }
+    std::cout << max_heap.size() << "\n";
+
+    return 0;
+}
