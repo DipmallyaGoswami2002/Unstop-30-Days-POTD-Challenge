@@ -1,0 +1,59 @@
+Problem Statement :
+ Every year, the riverside town where Ananya lives hosts the spectacular Neon Lantern Jubilee. A long boardwalk is decorated with N floating neon lanterns, numbered from 1 to N. Each lantern glows with a unique color spectrum represented by a non-negative integer called its identification code.
+
+To create the grand opening drone show, Ananya programs drones to fly over continuous segments of lanterns. A flight path begins at lantern L and ends at lantern R (1 ≤ L ≤ R ≤ N).
+
+According to the festival tradition, a flight path is considered Perfectly Harmonized if the bitwise XOR of all lantern identification codes in that segment is exactly equal to the festival's special Cosmic Key value K.
+
+Since thousands of lanterns illuminate the boardwalk and the number of possible flight paths is enormous, manually checking every segment is impossible.
+
+Help Ananya determine the total number of continuous lantern segments whose cumulative XOR value is exactly K.
+
+Solution : 
+// Code
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+
+using namespace std;
+
+long long countSubarraysWithXorK(int n, int k, const vector<int>& arr) {
+    unordered_map<int, long long> prefix_counts;
+    
+    prefix_counts[0] = 1;
+    
+    int current_prefix_xor = 0;
+    long long total_count = 0;
+    
+    for (int i = 0; i < n; ++i) {
+        current_prefix_xor ^= arr[i];
+        
+        int target_xor = current_prefix_xor ^ k;
+        
+        if (prefix_counts.find(target_xor) != prefix_counts.end()) {
+            total_count += prefix_counts[target_xor];
+        }
+        
+        prefix_counts[current_prefix_xor]++;
+    }
+    
+    return total_count;
+}
+
+int main() {
+    
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    int n, k;
+    if (cin >> n >> k) {
+        vector<int> arr(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> arr[i];
+        }
+        
+        cout << countSubarraysWithXorK(n, k, arr) << "\n";
+    }
+    
+    return 0;
+}
