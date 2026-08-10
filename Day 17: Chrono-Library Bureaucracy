@@ -1,0 +1,94 @@
+Problem Statament : Deep within the Royal Archive of Chronos, Chief Librarian Meera manages an infinitely expanding corridor of historical records. Unlike standard collections, books here do not possess static locations. Each manuscript is assigned a volatile chronological weight that fluctuates based on historical revisions. To preserve structural integrity and prevent temporal collapse, the records must remain meticulously balanced. Every single manuscript in a specific archive wing is connected such that it acts as a central hinge holding together two distinct sub-collections: one containing exclusively lighter historical weights to its left, and another containing exclusively heavier weights to its right.
+
+The severe constraint of the Chronos Archive is structural equilibrium. At any point in time, for every single manuscript acting as a hinge, the maximum number of steps required to reach the end of its left sub-collection and the maximum number of steps required to reach the end of its right sub-collection cannot differ by more than one. Whenever a new manuscript arrives or an existing one is modified, Meera must meticulously apply local shifts—re-hooking neighboring sets of records—to immediately restore this strict height equilibrium.
+
+The kingdom has ordered a massive reshuffling event consisting of Q operational commands. The wing starts completely empty. There are three types of events that can occur:
+
+A brand new historical record with a unique chronological weight W arrives and must be integrated while maintaining the global equilibrium.
+An existing record with weight W is permanently archived in a deep underground vault, requiring its removal from the active wing while seamlessly re-balancing the remaining structure.
+A royal inspector requests the current median weight of all records currently resting in the wing to audit temporal distribution. If the total number of records M is even, the inspector expects the average of the two middle weights, rounded down to the nearest integer.
+Meera requires an automated cataloging ledger that can execute these events sequentially and broadcast the inspector's requested metrics in real-time to prevent any administrative failures.
+
+Figure
+
+      [ 40 ]  (Height = 2)
+
+       /    \
+
+   [ 20 ]  [ 60 ]  (Height = 1)
+
+               /    \
+
+       [ 50 ]      [ 70 ]  (Height = 0)
+
+Input Format
+The first line contains a single integer Q, representing the total number of operational updates and inspector requests.
+
+Each of the next Q lines starts with an integer T, denoting the event type (1, 2, or 3).
+
+For events of type 1 and 2, the integer T is followed by a space and another integer W, indicating the chronological weight of the record. For type 3, no other integer follows.
+
+Output Format
+For each event of type 3, print a single integer on a new line representing the calculated audit weight. If an audit is requested when the wing contains no records, print -1.
+
+Solution : 
+
+#include <iostream>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+
+using namespace std;
+using namespace __gnu_pbds;
+
+typedef tree<
+    long long,
+    null_type,
+    less<long long>,
+    rb_tree_tag,
+    tree_order_statistics_node_update>
+    ordered_set;
+
+void solve() {
+    int Q;
+    if (!(cin >> Q)) return;
+
+    ordered_set active_set;
+
+    while (Q--) {
+        int type;
+        cin >> type;
+
+        if (type == 1) {
+            long long W;
+            cin >> W;
+            active_set.insert(W);
+        } 
+        else if (type == 2) {
+            long long W;
+            cin >> W;
+            active_set.erase(W);
+        } 
+        else if (type == 3) {
+            int M = active_set.size();
+            if (M == 0) {
+                cout << -1 << "\n";
+            } else if (M % 2 == 1) {
+                long long median = *active_set.find_by_order(M / 2);
+                cout << median << "\n";
+            } else {
+                
+                long long mid1 = *active_set.find_by_order((M / 2) - 1);
+                long long mid2 = *active_set.find_by_order(M / 2);
+                long long median = (mid1 + mid2) / 2;
+                cout << median << "\n";
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}
