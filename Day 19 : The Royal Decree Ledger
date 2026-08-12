@@ -1,0 +1,99 @@
+Problem Statement : 
+For centuries, the Kingdom of Vaishrath has been governed through royal decrees issued from the Grand Palace. Every decree is assigned a unique decree number before being sealed and stored inside the Royal Decree Ledger, a living archive maintained by the Chief Archivist Aarav. The ledger is not arranged according to the time the decrees are issued. Instead, it is always maintained in increasing order of decree numbers so that officials from every province can quickly locate important records during legal disputes.
+
+Unlike ordinary archives, the Royal Decree Ledger is constantly changing. New decrees are issued throughout the day, while older decrees occasionally become invalid because of revised laws, treaty amendments, or decisions made by the Royal Council. Whenever this happens, the outdated decree is permanently removed from the ledger.
+
+Several senior ministers frequently visit Aarav with urgent requests. Sometimes they ask whether a particular decree is currently valid and still exists in the archive. On other occasions, they need to know which valid decree comes immediately before or immediately after a specified decree number, allowing them to study the most relevant historical records. During annual legal audits, officials also request the decree occupying a particular position when all currently valid decrees are arranged in increasing order. Since thousands of updates and requests arrive every day, repeatedly rearranging the entire archive after every change would be far too slow and would delay the kingdom's judicial proceedings.
+
+Aarav therefore maintains the Royal Decree Ledger in a carefully organized manner so that every update preserves the ordered nature of the archive while allowing the requested information to be produced efficiently. Whenever a request cannot be satisfied—for example, if no smaller decree exists, no larger decree exists, or the requested position lies outside the number of valid decrees currently stored—the archive reports NONE.
+
+Help Aarav process every operation performed on the Royal Decree Ledger and print the required responses in the exact order the requests are received.
+
+Input Format
+The first line contains an integer Q, representing the total number of operations.
+
+Each of the next Q lines begins with a command.
+
+Solulu :
+  // Code
+  #include <iostream>
+#include <string>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+
+using namespace std;
+using namespace __gnu_pbds;
+
+typedef tree<
+    long long,
+    null_type,
+    less<long long>,
+    rb_tree_tag,
+    tree_order_statistics_node_update
+> ordered_set;
+
+int main() {
+
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int q;
+    if (!(cin >> q)) return 0;
+
+    ordered_set ledger;
+
+    while (q--) {
+        string op;
+        cin >> op;
+
+        if (op == "ADD") {
+            long long x;
+            cin >> x;
+            ledger.insert(x);
+        } else if (op == "REMOVE") {
+            long long x;
+            cin >> x;
+            ledger.erase(x);
+        } else if (op == "EXISTS") {
+            long long x;
+            cin >> x;
+            if (ledger.find(x) != ledger.end()) {
+                cout << "YES\n";
+            } else {
+                cout << "NO\n";
+            }
+        } else if (op == "BEFORE") {
+            long long x;
+            cin >> x;
+            auto it = ledger.lower_bound(x);
+            if (it == ledger.begin()) {
+                cout << "NONE\n";
+            } else {
+                --it;
+                cout << *it << "\n";
+            }
+        } else if (op == "AFTER") {
+            long long x;
+            cin >> x;
+
+            auto it = ledger.upper_bound(x);
+            if (it == ledger.end()) {
+                cout << "NONE\n";
+            } else {
+                cout << *it << "\n";
+            }
+        } else if (op == "POSITION") {
+            long long k;
+            cin >> k;
+            
+            if (k <= 0 || k > (long long)ledger.size()) {
+                cout << "NONE\n";
+            } else {
+                cout << *ledger.find_by_order(k - 1) << "\n";
+            }
+        }
+    }
+
+    return 0;
+}
+
