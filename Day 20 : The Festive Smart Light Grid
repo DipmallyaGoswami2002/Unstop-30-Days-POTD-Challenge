@@ -1,0 +1,71 @@
+Problem Statement : During the annual Festival of Lights, Kabir is in charge of managing an automated network of multi-colored smart LED nodes strung across the city square. The power distribution grid is built dynamically: each smart light has an architectural ID rating, and to prevent power surges, the grid layout mandates that every light installed to the left branch of a controller must have a lower ID rating, while every light to the right must have a higher ID rating.
+
+As part of the midnight finale, Kabir wants to execute a Symmetric Shuffling routine to create a cascading rainbow wave effect. The routine selects a target light rating K. Then, the system must automatically swap the entire structural position of the light with ID rating X and the light with ID rating Y, where X and Y are the closest available light ratings positioned perfectly symmetrically around K within the grid's structural hierarchy.
+
+To map out this configuration, Kabir needs to find the exact pair of elements (X, Y) such that X < K < Y, both X and Y currently exist in the grid, and their absolute differences from K are identical (meaning K − X = Y − K). If multiple such symmetric pairs exist in the grid, the automated shuffling routine defaults to selecting the pair that is closest to K to minimize fiber-optic delay.
+
+Kabir needs to figure out which pair of lights will be swapped, or determine if no such perfectly balanced pair exists.
+
+// Solulu 
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    long long k;
+    if (!(cin >> n >> k)) return 0;
+
+    unordered_set<long long> present;
+    long long min_val = -1, max_val = -1;
+    bool first = true;
+
+    for (int i = 0; i < n; ++i) {
+        long long val;
+        cin >> val;
+        if (val != -1) {
+            present.insert(val);
+            if (first) {
+                min_val = val;
+                max_val = val;
+                first = false;
+            } else {
+                min_val = min(min_val, val);
+                max_val = max(max_val, val);
+            }
+        }
+    }
+
+    long long d = 1;
+    bool found = false;
+
+    while (true) {
+        long long x = k - d;
+        long long y = k + d;
+
+        if (x < min_val && y > max_val) {
+            break;
+        }
+
+        if (present.count(x) && present.count(y)) {
+            cout << x << " " << y << "\n";
+            found = true;
+            break;
+        }
+
+        d++;
+    }
+
+    if (!found) {
+        cout << -1 << "\n";
+    }
+
+    return 0;
+}
