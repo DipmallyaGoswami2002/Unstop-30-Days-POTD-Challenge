@@ -1,0 +1,85 @@
+Problem Statement: A region has n towns connected by m bidirectional roads, where each road connects two towns directly (traveling along any road takes exactly one hop; towns not directly connected must be reached via a sequence of roads). Some towns host emergency broadcast towers. Tower i is located at a specific town and has a power value P_i, meaning its signal can survive at most P_i hops of travel before fading out completely (a signal that has traveled exactly P_i hops still just barely reaches that town; one more hop would fail).
+
+A town is considered covered if it lies within P_i hops (using the shortest hop distance) of at least one tower i. If a town cannot be reached from any tower at all (due to disconnected roads), it is never covered by that tower regardless of power.
+
+Given the road network and the list of towers, determine how many towns are covered by at least one tower's broadcast.
+
+// Solution 
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <sstream>
+
+using namespace std;
+
+string user_logic(const string& input_string) {
+    stringstream ss(input_string);
+    int n, m, k;
+    if (!(ss >> n >> m >> k)) return "0";
+
+    vector<vector<int>> adj(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        ss >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    vector<int> max_power(n + 1, -1);
+    
+    priority_queue<pair<int, int>> pq;
+
+    for (int i = 0; i < k; ++i) {
+        int t;
+        long long p;
+        ss >> t >> p;
+        
+        int effective_power = (p >= n) ? n : (int)p;
+        
+        if (effective_power > max_power[t]) {
+            max_power[t] = effective_power;
+            pq.push({effective_power, t});
+        }
+    }
+
+    while (!pq.empty()) {
+        auto [power, u] = pq.top();
+        pq.pop();
+
+        if (power < max_power[u]) continue;
+        if (power == 0) continue; 
+
+        for (int v : adj[u]) {
+            if (power - 1 > max_power[v]) {
+                max_power[v] = power - 1;
+                pq.push({power - 1, v});
+            }
+        }
+    }
+
+   
+    int covered_count = 0;
+    for (int i = 1; i <= n; ++i) {
+        if (max_power[i] >= 0) {
+            covered_count++;
+        }
+    }
+
+    return to_string(covered_count);
+}
+
+int main() {
+    // Fast I/O
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    string input_string, line;
+    while (getline(cin, line)) {
+        input_string += line + " ";
+    }
+
+    string result = user_logic(input_string);
+    cout << result << endl;
+
+    return 0;
+}
