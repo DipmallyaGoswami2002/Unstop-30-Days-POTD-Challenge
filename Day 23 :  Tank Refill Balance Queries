@@ -1,0 +1,56 @@
+// Code
+Problem Statement : A village maintains a single community water tank. Over N days, the net change in water level on day i is given by A[i] (a positive value means water was added that day, a negative value means water was consumed and the level dropped). The tank is assumed to start a query window at level 0 — i.e., for a given range of days you only care about the relative change in level across those days, not the absolute level of the tank on day 1.
+
+You will be asked Q independent queries. Each query gives a day range [L, R] (1-indexed, inclusive). For that query you must report:
+
+The total net change in tank level from day L to day R (i.e., the sum A[L] + A[L+1] + ... + A[R]).
+A one-word status describing that change:
+SURPLUS if the total is strictly greater than 0
+DEFICIT if the total is strictly less than 0
+BALANCED if the total is exactly 0
+
+Solution : 
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+int main() {
+
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    if (!(cin >> n)) return 0;
+
+    vector<long long> prefix(n + 1, 0);
+    for (int i = 1; i <= n; ++i) {
+        long long val;
+        cin >> val;
+        prefix[i] = prefix[i - 1] + val;
+    }
+
+    int q;
+    if (!(cin >> q)) return 0;
+
+    while (q--) {
+        int l, r;
+        cin >> l >> r;
+
+        long long total_change = prefix[r] - prefix[l - 1];
+
+        string status;
+        if (total_change > 0) {
+            status = "SURPLUS";
+        } else if (total_change < 0) {
+            status = "DEFICIT";
+        } else {
+            status = "BALANCED";
+        }
+
+        cout << total_change << " " << status << "\n";
+    }
+
+    return 0;
+}
