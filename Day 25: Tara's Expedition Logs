@@ -1,0 +1,51 @@
+Problem Statement: Tara is a wildlife researcher who just returned from an N-day expedition tracking a herd of deer in a forest reserve. Every single day she recorded the number of deer sightings in her field notebook, so she now has one number for each of the N days in order.
+
+Back at the research station, Tara needs to turn these daily notes into a readable report. Her plan is to split the entire N-day sequence into consecutive chapters, where each chapter covers some number of back-to-back days taken directly from where the previous chapter left off, and together all the chapters cover every single day with nothing left out and nothing overlapping. Her editor has one strict rule: the total number of sightings added up across all the days inside any single chapter must not exceed a limit K, since a chapter with too many combined sightings becomes too cluttered to read comfortably.
+
+Tara realizes that for a given expedition log there could be many different valid ways to split it into chapters obeying the editor's limit, and she is curious exactly how many distinct chapter arrangements are possible. Two arrangements are considered different if the chapters break at different points along the sequence of days.
+
+Since her expeditions sometimes run for many days, the number of possible arrangements can grow very large, so Tara only wants the count modulo 1000000007.
+
+Solulu: 
+// Code
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+const int MOD = 1000000007;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    long long k;
+    if(!(cin >> n >> k)) return 0;
+
+    vector<long long> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    vector<long long> dp(n + 1, 0);
+    dp[0] = 1;
+
+    long long current_window_sum = 0;
+    long long dp_window_sum = 1;
+    int L = 0;
+
+    for (int i = 1; i <= n; i++) {
+        current_window_sum += a[i - 1];
+
+        while (L < i && current_window_sum > k) {
+            current_window_sum -= a[L];
+            dp_window_sum = (dp_window_sum - dp[L] + MOD) % MOD;
+            L++;
+        }
+        dp[i] = dp_window_sum;
+        dp_window_sum = (dp_window_sum + dp[i]) % MOD;
+    }
+    cout << dp[n] << "\n";
+
+    return 0;
+}
