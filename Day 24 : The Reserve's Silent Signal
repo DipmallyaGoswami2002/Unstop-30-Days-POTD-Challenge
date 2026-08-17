@@ -1,0 +1,80 @@
+Problem Statement: Tara manages a wildlife reserve spread across a vast open valley where rare leopards roam freely. To document their movements without disturbing them, her team has installed a network of motion-triggered camera traps at fixed coordinates across the terrain, marked on a survey map using precise x and y positions in meters.
+
+Recently, the reserve's engineers raised a concern: if two camera traps are positioned too close to one another, their infrared sensors interfere, causing both units to trigger falsely and drain their batteries within hours instead of weeks. Before the next equipment order arrives, Tara wants to inspect the entire layout and identify the two traps that sit closest together anywhere on the map, so she can measure exactly how severe the worst-case interference risk is.
+
+There could be hundreds of thousands of camera traps scattered across the valley, spanning ridges, riverbanks, and dense forest patches, so walking through every possible pair by hand or even having a computer check every pair—would take far too long before the field team needs to head out. Tara needs the tightest gap between any two traps, expressed precisely, without relying on rough estimates or approximate rounding that floating-point distance calculations might introduce.
+
+She hands you the full list of trap coordinates and asks for a single number: the smallest squared distance between any two traps in the reserve, so the engineering team can decide immediately whether recalibration is required before dawn.
+
+// Solulu 
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+#include <set>
+#include <limits>
+
+using namespace std;
+
+typedef pair<long long, long long> Point;
+
+long long min_squared_distance(vector<Point>& points) {
+    int n = points.size();
+    sort(points.begin(), points.end());
+
+    long long min_d = numeric_limits<long long>::max();
+
+    set<pair<long long, long long>> active_set;
+    int left = 0;
+
+    for (int i = 0; i < n; ++i) {
+        long long cur_x = points[i].first;
+        long long cur_y = points[i].second;
+
+        while (left < i) {
+            long long dx = cur_x - points[left].first;
+            if (dx * dx >= min_d) {
+                active_set.erase({points[left].second, points[left].first});
+                left++;
+            } else {
+                break;
+            }
+        }
+
+        long long d_sqrt = static_cast<long long>(ceil(sqrt((double)min_d)));
+        
+        auto lower = active_set.lower_bound({cur_y - d_sqrt, numeric_limits<long long>::min()});
+        auto upper = active_set.upper_bound({cur_y + d_sqrt, numeric_limits<long long>::max()});
+
+        for (auto it = lower; it != upper; ++it) {
+            long long dy = cur_y - it->first;
+            long long dx = cur_x - it->second;
+            long long dist = dx * dx + dy * dy;
+            if (dist < min_d) {
+                min_d = dist;
+            }
+        }
+
+        active_set.insert({cur_y, cur_x});
+    }
+
+    return min_d;
+}
+
+int main() {
+    // Fast I/O
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int N;
+    if (cin >> N) {
+        vector<Point> cameras(N);
+        for (int i = 0; i < N; ++i) {
+            cin >> cameras[i].first >> cameras[i].second;
+        }
+
+        cout << min_squared_distance(cameras) << "\n";
+    }
+
+    return 0;
+}
