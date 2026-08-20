@@ -1,0 +1,125 @@
+Problem Statement : 
+Riya works in the traffic control room of a smart city, monitoring a long one-way highway called NH-7 that has been divided into N numbered segments, placed consecutively from the entry gate to the exit gate. Each segment currently reports a congestion level, a number representing how crowded that stretch of road is right now. Riya's monitoring software receives a continuous stream of events throughout the day, and she needs a system that can react to each event the instant it arrives.
+
+Some events are congestion surges, where a sudden rush of vehicles enters a continuous stretch of segments and raises the congestion level of every segment in that stretch by the same fixed amount. Other events are inspection requests from the city's traffic committee, who want to know the highest congestion level currently present anywhere within a specific stretch, so they can decide whether to dispatch officers there. A third kind of event comes from emergency dispatch, who ask a sharper question: within a given stretch, what is the segment closest to the entry gate whose congestion level has already crossed a dangerous threshold, since that is exactly where they should send help first; if no such segment exists in that stretch, they need to be told clearly that the stretch is currently safe.
+
+Riya's colleague Dev has been assigned to build the backend that answers all three kinds of events as they arrive, without ever recomputing congestion levels from scratch for every event, since NH-7 can have hundreds of thousands of segments and the city expects hundreds of thousands of events before the day ends. Dev realizes that surges affect ranges of segments at once, inspections ask about the peak within a range, and emergency dispatch asks a positional question within a range, so his system must be able to update a stretch efficiently while still answering both kinds of range questions quickly at any moment, even while surges keep piling on top of each other, layer after layer, throughout the day.
+
+// Code
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+static const long long INF = 1e18;
+
+struct SegmentTree {
+    int n;
+    vector<long long> tree;
+    vector<long long> lazy;
+
+    SegmentTree(int n) : n(n) {
+        tree.assign(4 * n + 1, 0);
+        lazy.assign(4 * n + 1, 0);
+    }
+
+    void build(const vector<long long>& a, int node, int start, int end) {
+        if (start == end) {
+            tree[node] = a[start];
+            return;
+        }
+        int mid = start + (end - start) / 2;
+        build(a, 2 * node, start, mid);
+        build(a, 2 * node + 1, mid + 1, end);
+        tree[node] = max(tree[2 * node], tree[2 * node + 1]);
+    }
+
+    void push(int node) {
+        if (lazy[node] != 0) {
+            tree[2 * node] += lazy[node];
+            lazy[2 * node] += lazy[node];
+            tree[2 * node + 1] += lazy[node];
+            lazy[2 * node + 1] += lazy[node];
+            lazy[node] = 0;
+        }
+    }
+
+    void update(int node, int start, int end, int l, int r, long long val) {
+        if (r < start || end < l) return;
+        if (l <= start && end <= r) {
+            tree[node] += val;
+            lazy[node] += val;
+            return;
+        }
+        push(node);
+        int mid = start + (end - start) / 2;
+        update(2 * node, start, mid, l, r, val);
+        update(2 * node + 1, mid + 1, end, l, r, val);
+        tree[node] = max(tree[2 * node], tree[2 * node + 1]);
+    }
+
+    long long query_max(int node, int start, int end, int l, int r) {
+        if (r < start || end < l) return -INF;
+        if (l <= start && end <= r) return tree[node];
+        push(node);
+        int mid = start + (end - start) / 2;
+        return max(query_max(2 * node, start, mid, l, r),
+                   query_max(2 * node + 1, mid + 1, end, l, r));
+    }
+
+    // Finds the leftmost index in [l, r] with value strictly greater than X
+    int query_first_greater(int node, int start, int end, int l, int r, long long x) {
+        if (r < start || end < l || tree[node] <= x) return -1;
+        if (start == end) return start;
+        push(node);
+        int mid = start + (end - start) / 2;
+        
+        int res = query_first_greater(2 * node, start, mid, l, r, x);
+        if (res != -1) return res;
+        return query_first_greater(2 * node + 1, mid + 1, end, l, r, x);
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    if (!(cin >> n)) return 0;
+
+    vector<long long> a(n + 1);
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+
+    SegmentTree seg(n);
+    seg.build(a, 1, 1, n);
+
+    int q;
+    if (!(cin >> q)) return 0;
+
+    while (q--) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+            int l, r;
+            long long v;
+            cin >> l >> r >> v;
+            seg.update(1, 1, n, l, r, v);
+        } else if (type == 2) {
+            int l, r;
+            cin >> l >> r;
+            cout << seg.query_max(1, 1, n, l, r) << "\n";
+        } else if (type == 3) {
+            int l, r;
+            long long x;
+            cin >> l >> r >> x;
+            int ans = seg.query_first_greater(1, 1, n, l, r, x);
+            cout << ans << "\n";
+        }
+    }
+
+    return 0;
+}
