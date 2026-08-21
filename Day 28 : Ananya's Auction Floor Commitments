@@ -1,0 +1,70 @@
+Problem Statement : Ananya represents bidding clients at a busy estate auction house where lots go under the hammer throughout the day according to a fixed floor schedule. Each lot has a start time and an end time during which the auctioneer's attention is locked on it, and each lot carries an expected resale profit if Ananya's crew successfully wins it. Once her crew commits to bidding on a lot, they are tied up from that lot's start time until its end time and cannot bid on anything else during that window, but the moment one lot's window ends, they are immediately free to jump into another lot whose window starts at that exact same moment or later.
+
+Ananya has been handed the full list of lots scheduled for the day, each with its start time, end time, and expected profit, and she needs to decide in advance exactly which lots her crew should commit to, since walking onto the floor undecided means losing lots to faster rivals. Her only rule is that no two chosen lots may have overlapping windows back-to-back commitments are perfectly fine, but even a single moment of overlap is not allowed, since the crew physically cannot be bidding in two places at once.
+
+With dozens of lots sometimes scheduled in a single day and profits varying wildly between them, simply grabbing the highest individual profits or the most lots is rarely the best strategy a lower-profit lot might free up the schedule just enough to fit in two better ones later. Ananya wants to lock in a set of non-overlapping commitments for the day that pushes her crew's combined expected profit as high as possible before the floor opens.
+
+Help Ananya work out the maximum total profit achievable from the day's lots, given every lot's start time, end time, and expected profit.
+
+
+Solution: 
+// Code 
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+struct Lot {
+    long long start, end, profit;
+};
+
+long long maxTotalProfit(std::vector<Lot>& lots) {
+    int n = lots.size();
+    if (n == 0) return 0;
+
+    std::sort(lots.begin(), lots.end(), [](const Lot& a, const Lot& b) {
+        if (a.end != b.end) return a.end < b.end;
+        return a.start < b.start;
+    });
+
+    std::vector<long long> dp(n + 1, 0);
+
+    for (int i = 0; i < n; ++i) {
+        long long excludeCurrent = dp[i];
+
+        int low = 0, high = i - 1;
+        int lastNonOverlappingIdx = -1; 
+        while (low <= high) {
+            int mid = low + (high - low) / 2;
+            if (lots[mid].end <= lots[i].start) {
+                lastNonOverlappingIdx = mid;
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+        long long includeCurrent = lots[i].profit;
+        if (lastNonOverlappingIdx != -1) {
+            includeCurrent += dp [lastNonOverlappingIdx + 1];
+        }
+
+        dp[i + 1] = std::max(excludeCurrent, includeCurrent);
+    }
+    return dp[n];
+}
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(NULL);
+
+    int n;
+    if (!(std::cin >> n)) return 0;
+
+    std::vector<Lot> lots(n);
+    for (int i = 0; i < n; ++i) {
+        std::cin >> lots[i].start >> lots[i].end >> lots[i].profit;
+            }
+            std::cout << maxTotalProfit(lots) << "\n";
+
+            return 0;
+}
+
