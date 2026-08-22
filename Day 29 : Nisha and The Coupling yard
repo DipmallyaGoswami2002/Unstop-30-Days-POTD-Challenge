@@ -1,0 +1,72 @@
+Problem statement :
+Nisha works as a dispatcher at a busy railway coupling yard where n freight coaches are parked in a single row, each with a fixed weight. Every morning, an incoming locomotive requests exactly m consecutive coaches to be coupled together and sent out as one train. The locomotive's coupling mechanism is sensitive to weight variation: it defines the imbalance of a group of coaches as the difference between the heaviest and the lightest coach weight in that group.
+
+The yard operator has told Nisha that too much imbalance strains the couplings during acceleration, so she must choose which m consecutive coaches to send out such that the imbalance is as small as possible. Since the coaches are parked in a fixed order and cannot be rearranged without a lengthy shunting operation, she can only pick a contiguous block of exactly m coaches from the row.
+
+Nisha wants to quickly evaluate every possible contiguous block of m coaches, compute the imbalance for each, and report the smallest imbalance achievable along with the position (1-indexed, using the position of the first coach in that block) where this minimum first occurs while scanning the row from left to right. If multiple blocks achieve the same minimum imbalance, she always prefers the one that starts earliest, since that requires the least amount of coach shunting from the current yard configuration.
+
+Help Nisha determine this minimum imbalance and its earliest starting position so she can quickly instruct the yard crew.
+
+
+Solulu 
+// Code
+#include <iostream>
+#include <vector>
+#include <deque>
+
+std::pair<long long, int> minImbalance(int n, int m, const std::vector<long long>& weights) {
+    std::deque<int> min_dq;
+    std::deque<int> max_dq;
+    
+    long long min_diff = -1;
+    int best_pos = 1;
+    
+    for (int i = 0; i < n; ++i) {
+        while (!min_dq.empty() && min_dq.front() <= i - m) {
+            min_dq.pop_front();
+        }
+        while (!max_dq.empty() && max_dq.front() <= i - m) {
+            max_dq.pop_front();
+        }
+        
+        while (!min_dq.empty() && weights[min_dq.back()] >= weights[i]) {
+            min_dq.pop_back();
+        }
+        min_dq.push_back(i);
+        
+        while (!max_dq.empty() && weights[max_dq.back()] <= weights[i]) {
+            max_dq.pop_back();
+        }
+        max_dq.push_back(i);
+        
+        if (i >= m - 1) {
+            long long current_max = weights[max_dq.front()];
+            long long current_min = weights[min_dq.front()];
+            long long current_diff = current_max - current_min;
+            int start_pos = (i - m + 1) + 1; 
+            
+            if (min_diff == -1 || current_diff < min_diff) {
+                min_diff = current_diff;
+                best_pos = start_pos;
+            }
+        }
+    }
+    
+    return {min_diff, best_pos};
+}
+ int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(NULL);
+
+    int n, m;
+    if (!(std::cin >> n >> m))
+    return 0;
+
+    std::vector<long long> weights(n);
+    for (int i = 0; i < n; ++i) {
+        std::cin >> weights[i];
+    }
+    std::pair<long long, int> result = minImbalance(n, m, weights);
+    std::cout << result.first << " "<< result.second << "\n";
+    return 0;
+ }
